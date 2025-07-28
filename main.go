@@ -30,9 +30,27 @@ func handlePreflightReq(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handleMethod(w http.ResponseWriter, r *http.Request, method string, message string, status int) {
+	if r.Method != method {
+		http.Error(w, message, status)
+		return
+	}
+}
+
+func sendData(w http.ResponseWriter, data interface{}, status int) {
+	w.WriteHeader(status)
+	encoder := json.NewEncoder(w)
+	encoder.Encode(data)
+}
+
+func handleError(w http.ResponseWriter, message string, err error, status int) {
+	http.Error(w, message+err.Error(), status)
+}
+
 func helloFunc(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "hello")
 }
+
 func aboutFunc(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "I'am Mahmud. I am a software engineer.")
 }
@@ -40,23 +58,14 @@ func aboutFunc(w http.ResponseWriter, r *http.Request) {
 func getProducts(w http.ResponseWriter, r *http.Request) {
 	handleCors(w)
 	handlePreflightReq(w, r)
-
-	if r.Method != "GET" {
-		http.Error(w, "Please give me get request", 400)
-		return
-	}
-	encoder := json.NewEncoder(w)
-	encoder.Encode(productsList)
+	handleMethod(w, r, "GET", "Please give me GET request.", 400)
+	sendData(w, productsList, 200)
 }
 
 func addProducts(w http.ResponseWriter, r *http.Request) {
 	handleCors(w)
 	handlePreflightReq(w, r)
-
-	if r.Method != "POST" {
-		http.Error(w, "Please give me post request with data.", 400)
-		return
-	}
+	handleMethod(w, r, "POST", "Please give me POST request.", 400)
 
 	var newProduct Product
 
@@ -64,19 +73,15 @@ func addProducts(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&newProduct)
 
 	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "Error decoding body."+err.Error(), 400)
+		handleError(w, "Error decoding body.", err, 400)
 		return
 	}
 
 	// fmt.Println(newProduct)
 	newProduct.Id = len(productsList) + 1
-
 	productsList = append(productsList, newProduct)
 
-	encoder := json.NewEncoder(w)
-
-	encoder.Encode(productsList)
+	sendData(w, productsList, 201)
 
 }
 
