@@ -18,8 +18,16 @@ var productsList []Product
 
 func handleCors(w http.ResponseWriter) {
 	w.Header().Set("Access-Controll-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS")
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+}
+
+func handlePreflightReq(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(200)
+		return
+	}
 }
 
 func helloFunc(w http.ResponseWriter, r *http.Request) {
@@ -31,10 +39,7 @@ func aboutFunc(w http.ResponseWriter, r *http.Request) {
 
 func getProducts(w http.ResponseWriter, r *http.Request) {
 	handleCors(w)
-
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(200)
-	}
+	handlePreflightReq(w, r)
 
 	if r.Method != "GET" {
 		http.Error(w, "Please give me get request", 400)
@@ -46,10 +51,7 @@ func getProducts(w http.ResponseWriter, r *http.Request) {
 
 func addProducts(w http.ResponseWriter, r *http.Request) {
 	handleCors(w)
-
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(200)
-	}
+	handlePreflightReq(w, r)
 
 	if r.Method != "POST" {
 		http.Error(w, "Please give me post request with data.", 400)
